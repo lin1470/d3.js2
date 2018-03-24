@@ -1,0 +1,114 @@
+<html>
+    <head>
+        <title>baseBall</title>
+        <script src="./d3.v3.min.js"></script>
+        <style>
+        h2 {
+          color: #1d351def;
+          text-align: center;
+        }
+        </style>
+        <script>    
+       
+            function drawPie(data){
+                d3.select("body")
+              .append("h2")
+              .text("Number Of Handedness ");
+                 var width  = 400;	//SVG绘制区域的宽度
+		var height = 400;	
+        var svg = d3.select("body")			//选择<body>
+					.append("svg")			//在<body>中添加<svg>
+					.attr("width", width)	//设定<svg>的宽度属性
+					.attr("height", height);//设定<svg>的高度属性
+
+
+               
+              var handedness = d3.nest()
+								  .key(function(d){
+								  	return d.handedness;
+								  })
+								  .rollup(function(values){
+								  	return values.length;
+								  })
+								  .entries(data);
+			var handedness_number = new Array();
+            for(i =0;i<handedness.length;i++){
+    			handedness_number[i] = handedness[i]['values'];
+			}
+            var pie = d3.layout.pie();
+            var piedata = pie(handedness_number);
+
+            //3.绘制
+            //外半径和内半径
+            var outerRadius = width / 3;
+		    var innerRadius = 0;
+            //创建弧生成器
+            var arc = d3.svg.arc()
+                    .innerRadius(innerRadius)
+                    .outerRadius(outerRadius);
+            var color = d3.scale.category20();
+            // debugger;
+            //添加对应数目的弧组,即<g>元素
+
+            var arcs = svg.selectAll('g')
+                    .data(piedata)
+                    .enter()
+                    .append('g')
+                    .attr('transform','translate('+(width/2)+','+(height/2)+')');
+            //添加弧路径元素
+            arcs.append('path')
+                .attr('fill',function(d,i){
+                    return color(i); //设定弧颜色
+                })
+                .attr('d',function(d){
+                    return arc(d); // 使用弧生成器
+                });
+
+            //添加弧内的文字元素
+            arcs.append('text')
+                .attr('transform',function(d){
+                    var x = arc.centroid(d)[0]*1.4;//文字的x坐标
+                    var y = arc.centroid(d)[1]*1.4;//文字的y坐标
+                    return 'translate('+x+','+y+')';
+                })
+                .attr('text-anchor','middle')
+                .text(function(d){
+                    //计算市场份额的百分比
+                    var percent = Number(d.value)/d3.sum(handedness_number) * 100;
+                    
+                    //保留1位小数点，末尾加一个百分号返回
+                    return percent.toFixed(1) + "%";
+                });
+            //添加连接弧外文字的直线元素
+            arcs.append("line")
+                .attr("stroke","black")
+                .attr("x1",function(d){ return arc.centroid(d)[0] * 2; })
+                .attr("y1",function(d){ return arc.centroid(d)[1] * 2; })
+                .attr("x2",function(d){ return arc.centroid(d)[0] * 2.2; })
+                .attr("y2",function(d){ return arc.centroid(d)[1] * 2.2; });
+            //添加弧外的文字元素
+            arcs.append("text")
+                .attr('class','outerText')
+                .attr("transform",function(d){
+                    var x = arc.centroid(d)[0] * 2.5;
+                    var y = arc.centroid(d)[1] * 2.5;
+                    return "translate(" + x + "," + y + ")";
+                })
+                .attr("text-anchor","middle")
+                .text('hello');
+            textdata = ['Left','Right','Both'];
+            d3.selectAll('.outerText')
+                .data(textdata)
+                .text(function(d){
+                    return d
+                })
+            debugger;
+            }
+        </script>
+    </head>
+    <body>
+        <script>
+            d3.csv("baseball_data.csv",drawPie)
+        </script>
+    </body>
+</html>
